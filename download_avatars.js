@@ -2,11 +2,6 @@ const request = require('request');
 const fs = require('fs');
 const dotenv = require('dotenv').config('.env');
 
-const apiCredentials = {
-  username: process.env.GITHUB_USER,
-  token: process.env.GITHUB_TOKEN
-}
-
 console.log('Welcome to the GitHub Avatar Downloader!');
 
 const repositoryOwner = process.argv[2];
@@ -33,8 +28,8 @@ function getRepoContributors(repoOwner, repoName, cb) {
       return;
     }
     else if (response && response.statusCode !== 200) { // display response if not 200
-     console.log("The request was not successful. Response code:", response.statusCode);
-     return;
+      console.log("The request was not successful. Response code:", response.statusCode);
+      return;
     }
     cb(null, JSON.parse(body)); // parse body and return it to the callback function
   });
@@ -67,17 +62,31 @@ function downloadImageByURL(url, filePath) {
 
 }
 
-if (repositoryOwner && repositoryName && repositoryOwner !== '' && repositoryName !== ''
-    && process.argv.length === 4) {
-  getRepoContributors(repositoryOwner, repositoryName, function(err, result) { // get all contributors for the project
-    result.forEach(function(element) { // iterate through the returned list
-      downloadImageByURL(element['avatar_url'], `${downloadDir}/${element['login']}.jpg`); // download their avatar
-    });
-  });
+if (fs.existsSync('.env')) {
+  const apiCredentials = {
+    username: process.env.GITHUB_USER,
+    token: process.env.GITHUB_TOKEN
+  }
+  if (!apiCredentials.username || !apiCredentials.token) {
+    console.log(".env file is missing information!");
+  }
+  else {
+    if (repositoryOwner && repositoryName && repositoryOwner !== '' && repositoryName !== ''
+      && process.argv.length === 4) {
+        getRepoContributors(repositoryOwner, repositoryName, function(err, result) { // get all contributors for the project
+          result.forEach(function(element) { // iterate through the returned list
+            downloadImageByURL(element['avatar_url'], `${downloadDir}/${element['login']}.jpg`); // download their avatar
+          });
+        });
+      }
+      else { // error message when repo owner and repo name are not supplied
+        console.log("The given number of arguments is incorrect", process.argv.length - 2 + "; Should be 2");
+        console.log("Please supply a repository owner and a repository name");
+        console.log("Usage:");
+        console.log("\tnode download_avatars.js nodejs node");
+      }
+  }
 }
-else { // error message when repo owner and repo name are not supplied
-  console.log("The given number of arguments is incorrect", process.argv.length - 2 + "; Should be 2");
-  console.log("Please supply a repository owner and a repository name");
-  console.log("Usage:");
-  console.log("\tnode download_avatars.js nodejs node");
+else {
+  console.log(".env file with api credentials is missing!");
 }
