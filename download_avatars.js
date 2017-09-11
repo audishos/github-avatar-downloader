@@ -7,14 +7,11 @@ const apiCredentials = {
   token: process.env.GITHUB_TOKEN
 }
 
-console.log(apiCredentials);
-// const GITHUB_USER = 'audishos';
-// const GITHUB_TOKEN = '4bb1bbc514fce6c9ade965f65d5b0ade3ebf1b13';
-
 console.log('Welcome to the GitHub Avatar Downloader!');
 
-const REPOOWNER = process.argv[2];
-const REPONAME = process.argv[3];
+const repositoryOwner = process.argv[2];
+const repositoryName = process.argv[3];
+const downloadDir = './avatars';
 
 // gets the contrubutors for the specified repo owner and repo name
 // accepts a callback in order to process the list
@@ -41,6 +38,9 @@ function getRepoContributors(repoOwner, repoName, cb) {
 
 // downloads the image at the specified URL to the specified path
 function downloadImageByURL(url, filePath) {
+  if (!fs.existsSync(downloadDir)) {
+    fs.mkdir(downloadDir);
+  }
   request.get(url)
   .on('error', function(error) {
     console.log("The following error occurred:", error);
@@ -60,10 +60,10 @@ function downloadImageByURL(url, filePath) {
 
 }
 
-if (REPOOWNER && REPONAME && REPOOWNER !== '' && REPONAME !== '') {
-  getRepoContributors(REPOOWNER, REPONAME, function(err, result) { // get all contributors for the project
+if (repositoryOwner && repositoryName && repositoryOwner !== '' && repositoryName !== '') {
+  getRepoContributors(repositoryOwner, repositoryName, function(err, result) { // get all contributors for the project
     result.forEach(function(element) { // iterate through the returned list
-      downloadImageByURL(element['avatar_url'], `./avatars/${element['login']}.jpg`); // download their avatar
+      downloadImageByURL(element['avatar_url'], `${downloadDir}/${element['login']}.jpg`); // download their avatar
     });
   });
 }
