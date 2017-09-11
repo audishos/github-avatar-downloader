@@ -60,7 +60,8 @@ function downloadImageByURL(url, filePath) {
 
 }
 
-if (repositoryOwner && repositoryName && repositoryOwner !== '' && repositoryName !== '') {
+if (repositoryOwner && repositoryName && repositoryOwner !== '' && repositoryName !== ''
+    && process.argv.length === 4) {
   getRepoContributors(repositoryOwner, repositoryName, function(err, result) { // get all contributors for the project
     result.forEach(function(element) { // iterate through the returned list
       downloadImageByURL(element['avatar_url'], `${downloadDir}/${element['login']}.jpg`); // download their avatar
@@ -68,7 +69,8 @@ if (repositoryOwner && repositoryName && repositoryOwner !== '' && repositoryNam
   });
 }
 else { // error message when repo owner and repo name are not supplied
-  console.log("Please enter a repository owner and a repository name");
+  console.log("The given number of arguments is incorrect", process.argv.length - 2 + "; Should be 2");
+  console.log("Please supply a repository owner and a repository name");
   console.log("Usage:");
   console.log("\tnode download_avatars.js nodejs node");
 }
