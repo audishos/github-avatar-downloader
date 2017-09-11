@@ -18,11 +18,12 @@ function getRepoContributors(repoOwner, repoName, cb) {
   request(options, function(error, response, body) {
     console.log('error:', error); // Print the error if one occurred
     console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-    console.log('body:', body); // Print the HTML for the Google homepage.
+    cb(null, JSON.parse(body));
   });
 }
 
 getRepoContributors("jquery", "jquery", function(err, result) {
-  console.log("Errors:", err);
-  console.log("Result:", result);
+  result.forEach(function(element) {
+    console.log(element['avatar_url']);
+  });
 });
