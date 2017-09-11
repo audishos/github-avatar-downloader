@@ -1,8 +1,15 @@
 const request = require('request');
 const fs = require('fs');
+const dotenv = require('dotenv').config('.env');
 
-const GITHUB_USER = 'audishos';
-const GITHUB_TOKEN = '4bb1bbc514fce6c9ade965f65d5b0ade3ebf1b13';
+const apiCredentials = {
+  username: process.env.GITHUB_USER,
+  token: process.env.GITHUB_TOKEN
+}
+
+console.log(apiCredentials);
+// const GITHUB_USER = 'audishos';
+// const GITHUB_TOKEN = '4bb1bbc514fce6c9ade965f65d5b0ade3ebf1b13';
 
 console.log('Welcome to the GitHub Avatar Downloader!');
 
@@ -13,7 +20,7 @@ const REPONAME = process.argv[3];
 // accepts a callback in order to process the list
 function getRepoContributors(repoOwner, repoName, cb) {
   const options = { // github reuires that a User-Agent is passed so we must use the options object
-    url: `https://${GITHUB_USER}:${GITHUB_TOKEN}@api.github.com/repos/${repoOwner}/${repoName}/contributors`,
+    url: `https://${apiCredentials.username}:${apiCredentials.token}@api.github.com/repos/${repoOwner}/${repoName}/contributors`,
     headers: {
       'User-Agent': 'GitHub Avatar Downloader - Student Project'
     }
