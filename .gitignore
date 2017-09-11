@@ -56,3 +56,7 @@ typings/
 
 # dotenv environment variables file
 .env
+
+# ignore files in the avatars folder but require the folder
+avatars/*
+!avatars/.gitkeep
