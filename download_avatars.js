@@ -28,10 +28,14 @@ function getRepoContributors(repoOwner, repoName, cb) {
       console.log("The following error occurred:", error);
       return;
     }
-   if (response && response.statusCode !== 200) { // display response if not 200
+    if (response && response.statusCode === 404) {
+      console.log(`404 - https://github.com/${repoOwner}/${repoName} was not found!`);
+      return;
+    }
+    else if (response && response.statusCode !== 200) { // display response if not 200
      console.log("The request was not successful. Response code:", response.statusCode);
      return;
-   }
+    }
     cb(null, JSON.parse(body)); // parse body and return it to the callback function
   });
 }
@@ -39,18 +43,21 @@ function getRepoContributors(repoOwner, repoName, cb) {
 // downloads the image at the specified URL to the specified path
 function downloadImageByURL(url, filePath) {
   if (!fs.existsSync(downloadDir)) {
-    fs.mkdir(downloadDir);
+    fs.mkdirSync(downloadDir);
   }
   request.get(url)
   .on('error', function(error) {
     console.log("The following error occurred:", error);
   })
   .on('response', function(response) {
-    if (response && response.statusCode !== 200) {
-      console.log("The request was not successful. Response code:", response.statusCode);
+    if (response && response.statusCode === 200) {
+      console.log(`Downloading ${url} to ${filePath} ...`);
+    }
+    else if (response && response.statusCode === 404) {
+      console.log(`404 - ${url} was not found!`)
     }
     else {
-      console.log(`Downloading ${url} to ${filePath} ...`);
+      console.log("The request was not successful. Response code:", response.statusCode);
     }
   })
   .on('end', function() {
