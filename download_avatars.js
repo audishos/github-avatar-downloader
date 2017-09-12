@@ -1,101 +1,26 @@
 const request = require('request');
 const fs = require('fs');
 const dotenv = require('dotenv').config('.env');
+const githubAPI = require('./githubAPI.js');
 
-const apiCredentials = {
-  username: process.env.GITHUB_USER,
-  token: process.env.GITHUB_TOKEN
-}
+const downloadDir = './avatars';
 
 console.log('Welcome to the GitHub Avatar Downloader!');
 
 const repositoryOwner = process.argv[2];
 const repositoryName = process.argv[3];
-const downloadDir = './avatars';
 
-// gets the contrubutors for the specified repo owner and repo name
-// accepts a callback in order to process the list
-function getRepoContributors(repoOwner, repoName, cb) {
-  const options = { // github reuires that a User-Agent is passed so we must use the options object
-    url: `https://${apiCredentials.username}:${apiCredentials.token}@api.github.com/repos/${repoOwner}/${repoName}/contributors`,
-    headers: {
-      'User-Agent': 'GitHub Avatar Downloader - Student Project'
-    }
+if (repositoryOwner && repositoryName && repositoryOwner !== '' && repositoryName !== ''
+  && process.argv.length === 4) { // makde sure repo owner and name exist and user provided correct # of args
+    githubAPI.getRepoContributors(repositoryOwner, repositoryName, function(err, result) { // get all contributors for the project
+      result.forEach(function(element) { // iterate through the returned list
+        githubAPI.downloadImageByURL(element.avatar_url, `${downloadDir}/${element.login}.jpg`); // download their avatar
+      });
+    });
   }
-
-  request(options, function(error, response, body) {
-    if (error) { // display error if true
-      console.log("The following error occurred:", error);
-      return;
-    }
-    else if (response && response.statusCode === 404) {
-      console.log(`404 - https://github.com/${repoOwner}/${repoName} was not found!`);
-      return;
-    }
-    else if (response && response.statusCode === 401) {
-      console.log("401 - Incorrect credentials. This is likely because your token is incorrect!");
-      return;
-    }
-    else if (response && response.statusCode !== 200) { // display response if not 200
-      console.log("The request was not successful. Response code:", response.statusCode);
-      return;
-    }
-    cb(null, JSON.parse(body)); // parse body and return it to the callback function
-  });
-}
-
-// downloads the image at the specified URL to the specified path
-function downloadImageByURL(url, filePath) {
-  if (!fs.existsSync(downloadDir)) {
-    fs.mkdirSync(downloadDir);
+  else { // error message when repo owner and repo name are not supplied
+    console.log("The given number of arguments is incorrect", process.argv.length - 2 + "; Should be 2");
+    console.log("Please supply a repository owner and a repository name");
+    console.log("Usage:");
+    console.log("\tnode download_avatars.js nodejs node");
   }
-  request.get(url)
-  .on('error', function(error) {
-    console.log("The following error occurred:", error);
-  })
-  .on('response', function(response) {
-    if (response && response.statusCode === 200) {
-      console.log(`Downloading ${url} to ${filePath} ...`);
-    }
-    else if (response && response.statusCode === 404) {
-      console.log(`404 - ${url} was not found!`)
-    }
-    else {
-      console.log("The request was not successful. Response code:", response.statusCode);
-    }
-  })
-  .on('end', function() {
-    console.log(`Download of ${url} to ${filePath} is complete!!`);
-  })
-  .pipe(fs.createWriteStream(filePath));
-
-}
-
-if (fs.existsSync('.env')) { // make sure .env file isn't missing
-  if (apiCredentials.username && apiCredentials.token) { // make aure api credentials exist
-    if (repositoryOwner && repositoryName && repositoryOwner !== '' && repositoryName !== ''
-      && process.argv.length === 4) { // makde sure repo owner and name exist and user provided correct # of args
-        getRepoContributors(repositoryOwner, repositoryName, function(err, result) { // get all contributors for the project
-          result.forEach(function(element) { // iterate through the returned list
-            downloadImageByURL(element.avatar_url, `${downloadDir}/${element.login}.jpg`); // download their avatar
-          });
-        });
-      }
-      else { // error message when repo owner and repo name are not supplied
-        console.log("The given number of arguments is incorrect", process.argv.length - 2 + "; Should be 2");
-        console.log("Please supply a repository owner and a repository name");
-        console.log("Usage:");
-        console.log("\tnode download_avatars.js nodejs node");
-      }
-  }
-  else {
-    console.log(".env file is missing information!");
-  }
-}
-else {
-  console.log(".env file with api credentials is missing!");
-}
-
-module.exports = {
-  getRepoContributors: getRepoContributors
-};
