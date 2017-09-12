@@ -61,6 +61,17 @@ function getRepoContributors(repoOwner, repoName, cb) {
 
 // downloads the image at the specified URL to the specified path
 function downloadImageByURL(url, filePath) {
+  const request = require('request');
+  const fs = require('fs');
+  const dotenv = require('dotenv').config('.env');
+
+  const apiCredentials = {
+    username: process.env.GITHUB_USER,
+    token: process.env.GITHUB_TOKEN
+  }
+
+  const downloadDir = filePath.split('/').slice(0, -1).join('/');
+  console.log(downloadDir);
 
   if (fs.existsSync('.env')) { // make sure .env file isn't missing
     if (apiCredentials.username && apiCredentials.token) { // make aure api credentials exist
