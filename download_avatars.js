@@ -2,6 +2,11 @@ const request = require('request');
 const fs = require('fs');
 const dotenv = require('dotenv').config('.env');
 
+const apiCredentials = {
+  username: process.env.GITHUB_USER,
+  token: process.env.GITHUB_TOKEN
+}
+
 console.log('Welcome to the GitHub Avatar Downloader!');
 
 const repositoryOwner = process.argv[2];
@@ -23,8 +28,12 @@ function getRepoContributors(repoOwner, repoName, cb) {
       console.log("The following error occurred:", error);
       return;
     }
-    if (response && response.statusCode === 404) {
+    else if (response && response.statusCode === 404) {
       console.log(`404 - https://github.com/${repoOwner}/${repoName} was not found!`);
+      return;
+    }
+    else if (response && response.statusCode === 401) {
+      console.log("401 - Incorrect credentials. This is likely because your token is incorrect!");
       return;
     }
     else if (response && response.statusCode !== 200) { // display response if not 200
@@ -62,20 +71,13 @@ function downloadImageByURL(url, filePath) {
 
 }
 
-if (fs.existsSync('.env')) {
-  const apiCredentials = {
-    username: process.env.GITHUB_USER,
-    token: process.env.GITHUB_TOKEN
-  }
-  if (!apiCredentials.username || !apiCredentials.token) {
-    console.log(".env file is missing information!");
-  }
-  else {
+if (fs.existsSync('.env')) { // make sure .env file isn't missing
+  if (apiCredentials.username && apiCredentials.token) { // make aure api credentials exist
     if (repositoryOwner && repositoryName && repositoryOwner !== '' && repositoryName !== ''
-      && process.argv.length === 4) {
+      && process.argv.length === 4) { // makde sure repo owner and name exist and user provided correct # of args
         getRepoContributors(repositoryOwner, repositoryName, function(err, result) { // get all contributors for the project
           result.forEach(function(element) { // iterate through the returned list
-            downloadImageByURL(element['avatar_url'], `${downloadDir}/${element['login']}.jpg`); // download their avatar
+            downloadImageByURL(element.avatar_url, `${downloadDir}/${element.login}.jpg`); // download their avatar
           });
         });
       }
@@ -86,7 +88,14 @@ if (fs.existsSync('.env')) {
         console.log("\tnode download_avatars.js nodejs node");
       }
   }
+  else {
+    console.log(".env file is missing information!");
+  }
 }
 else {
   console.log(".env file with api credentials is missing!");
 }
+
+module.exports = {
+  getRepoContributors: getRepoContributors
+};
