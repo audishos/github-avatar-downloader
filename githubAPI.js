@@ -1,3 +1,22 @@
+function checkRequirements() {
+  const request = require('request');
+  const fs = require('fs');
+  const dotenv = require('dotenv').config('.env');
+
+  let pass = true;
+
+  if (!fs.existsSync('.env')) {
+    console.log(".env file with api credentials is missing!");
+    pass = false;
+  }
+  else if (!process.env.GITHUB_USER || !process.env.GITHUB_TOKEN) {
+    console.log(".env file is missing information!");
+    pass = false;
+  }
+
+  return pass;
+}
+
 // gets the contrubutors for the specified repo owner and repo name
 // accepts a callback in order to process the list
 function getRepoContributors(repoOwner, repoName, cb) {
@@ -28,8 +47,7 @@ function getRepoContributors(repoOwner, repoName, cb) {
 
     const downloadDir = './avatars';
 
-    if (fs.existsSync('.env')) { // make sure .env file isn't missing
-      if (apiCredentials.username && apiCredentials.token) { // make aure api credentials exist
+    if (checkRequirements()) {
 
         if (error) { // display error if true
           console.log("The following error occurred:", error);
@@ -50,11 +68,7 @@ function getRepoContributors(repoOwner, repoName, cb) {
         cb(null, JSON.parse(body)); // parse body and return it to the callback function
       }
       else {
-        console.log(".env file is missing information!");
-      }
-    }
-    else {
-      console.log(".env file with api credentials is missing!");
+        return;
     }
   });
 }
@@ -71,39 +85,34 @@ function downloadImageByURL(url, filePath) {
   }
 
   const downloadDir = filePath.split('/').slice(0, -1).join('/');
-  console.log(downloadDir);
 
-  if (fs.existsSync('.env')) { // make sure .env file isn't missing
-    if (apiCredentials.username && apiCredentials.token) { // make aure api credentials exist
-      if (!fs.existsSync(downloadDir)) {
-        fs.mkdirSync(downloadDir);
+  if(checkRequirements()) {
+
+    if (!fs.existsSync(downloadDir)) {
+      fs.mkdirSync(downloadDir);
+    }
+    request.get(url)
+    .on('error', function(error) {
+      console.log("The following error occurred:", error);
+    })
+    .on('response', function(response) {
+      if (response && response.statusCode === 200) {
+        console.log(`Downloading ${url} to ${filePath} ...`);
       }
-      request.get(url)
-      .on('error', function(error) {
-        console.log("The following error occurred:", error);
-      })
-      .on('response', function(response) {
-        if (response && response.statusCode === 200) {
-          console.log(`Downloading ${url} to ${filePath} ...`);
-        }
-        else if (response && response.statusCode === 404) {
-          console.log(`404 - ${url} was not found!`)
-        }
-        else {
-          console.log("The request was not successful. Response code:", response.statusCode);
-        }
-      })
-      .on('end', function() {
-        console.log(`Download of ${url} to ${filePath} is complete!!`);
-      })
-      .pipe(fs.createWriteStream(filePath));
-    }
-    else {
-      console.log(".env file is missing information!");
-    }
+      else if (response && response.statusCode === 404) {
+        console.log(`404 - ${url} was not found!`)
+      }
+      else {
+        console.log("The request was not successful. Response code:", response.statusCode);
+      }
+    })
+    .on('end', function() {
+      console.log(`Download of ${url} to ${filePath} is complete!!`);
+    })
+    .pipe(fs.createWriteStream(filePath));
   }
   else {
-    console.log(".env file with api credentials is missing!");
+    return;
   }
 }
 
